@@ -27,17 +27,15 @@ public class LaserScanner : Node {
 	public string channel = "undefined";
 	const float TAU = Mathf.PI * 2;
 	public float maxDist = 50f;
-	[Range(0, 360)]
-	public float sweep = 360;
-	[Range(20,720)]
-	public int numLasers = 100;
+	[Range(0, 360)] public float sweep = 360;
+	[Range(20,720)] public int numLasers = 100;
 	public float offset = .1f;
-	[Range(0, .5f)]
-	public float laserWobble = .1f;
+	[Range(0, .5f)] public float laserWobble = .1f;
 	public float uncertainty { get { return .01f * laserWobble; } }
 
 	public bool visualizeLine = false;
 	public bool visualizeHit = false;
+	[Range(0, 1)] public float showHitChance = .2f;
 	
 	IPub<LaserScanData> pub;
 
@@ -72,7 +70,7 @@ public class LaserScanner : Node {
 			if (hit = Physics.Raycast(ray, out rayhit, maxDist)) {
 				if (rayhit.distance > 0 && rayhit.distance < dist) { dist = rayhit.distance; }
 
-				if (visualizeHit) {
+				if (visualizeHit && Random.value < showHitChance) {
 					Debug.DrawLine(rayhit.point, rayhit.point+Vector3.up + Random.insideUnitSphere * uncertainty, Color.red, delay); 
 					Debug.DrawLine(rayhit.point, rayhit.point-Vector3.up + Random.insideUnitSphere * uncertainty, Color.red, delay); 
 					Debug.DrawLine(rayhit.point, rayhit.point+Vector3.right + Random.insideUnitSphere * uncertainty, Color.red, delay); 

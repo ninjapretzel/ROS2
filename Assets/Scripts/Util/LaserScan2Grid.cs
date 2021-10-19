@@ -183,6 +183,9 @@ public class OccupancyGrid {
 		Color occupied = occ ?? new Color(0,0,0);
 		Color open = opn ?? new Color(1,1,1);
 
+		Vector3 size = Vector3.one * info.resolution;
+		size.y *= .05f;
+		Vector3 halfSize = size * .5f;
 		for (int i = 0; i < info.size; i++) {
 			if (data[i] >= 0) {
 				float f = 1f - data[i] / 100f;
@@ -191,8 +194,8 @@ public class OccupancyGrid {
 				Gizmos.color = c;
 				int x = i % info.width;
 				int z = i / info.width;
-				Vector3 pt = GridToWorld(x, 0, z) + Vector3.one * info.resolution * .5f; ;
-				Gizmos.DrawCube(pt, Vector3.one * info.resolution);
+				Vector3 pt = GridToWorld(x, 0, z) + halfSize;
+				Gizmos.DrawCube(pt, size);
 			}
 		}
 	}
