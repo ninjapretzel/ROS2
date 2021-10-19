@@ -5,8 +5,8 @@ using System.Collections.Generic;
 
 public class FrontierFinder : Node {
 
-	public string inputChannel = "undefined";
-	public string outputChannel = "frontiers";
+	public string inputChannel = "undefined"; // would be "/map" in ros
+	public string outputChannel = "frontiers"; // would be "/frontier_map" in ros
 
 	public int growthFactor = 2;
 	
@@ -20,13 +20,12 @@ public class FrontierFinder : Node {
 	public Color frontiersColor = Color.red;
 	public OccupancyGrid grown;
 	public OccupancyGrid frontiers;
-	// IPub<Marker> pub2;
-
+	
 	void Awake() {
 		pub = MessageBus<OccupancyGrid>.PublishTo(outputChannel);
 	}
 	void OnEnable() {
-		sub = MessageBus<OccupancyGrid>.SubscribeTo(inputChannel, Handler);
+		sub = MessageBus<OccupancyGrid>.SubscribeTo(inputChannel, Handler); // in ros, this is just "/map"
 	}
 	void OnDisable() {
 		sub.Unsubscribe();
@@ -45,6 +44,9 @@ public class FrontierFinder : Node {
 		sbyte[] fronts = Find(grown);
 		frontiers = new OccupancyGrid(input.header, input.info, fronts);
 
+		// for some reason in ros, you have to reuse the input OccupancyGrid
+		// input.data = fronts; // in ROS , just reassign the `OccupancyGrid.data` field
+
 		pub.Publish(frontiers);
 	}
 
@@ -56,8 +58,8 @@ public class FrontierFinder : Node {
 			int x = pt.x;
 			int y = pt.y;
 
-			int occ = 0;
-			int unk = 0;
+			int occ = 0; // occupied neighbors 
+			int unk = 0; // unknown neighbors
 			for (int xx = -amt; xx <= amt; xx++) {
 				for (int yy = -amt; yy <= amt; yy++) {
 					if (xx == 0 && yy == 0) { continue; }
@@ -83,18 +85,20 @@ public class FrontierFinder : Node {
 		if (amt < 1) { amt = 1; }
 		for (int i = 0; i < input.size; i++) {
 			Vector2Int pt = input.IndexToGrid(i);
-			int x = pt.x;
+			int x = pt.x; // convert from 1d index to 2d
 			int y = pt.y;
 			// data[i] = input.data[i];
 
+			// check all neighbors within some distance (amt)
 			for (int xx = -amt; xx <= amt; xx++) {
 				for (int yy = -amt; yy <= amt; yy++) {
 					if (xx == 0 && yy == 0) { continue; }
 					int idx = input.GridToIndex(x + xx, y + yy);
+					// convert back from the neighbors' 2d index to 1d index
+					// see if they're inside the grid 
 					if (idx >= 0 && idx < input.size) {
-						
-						if (input.data[idx] > 50) { 
-							data[i] = 100; 
+						if (input.data[idx] > 50) {  // if they're occupied
+							data[i] = 100; //any occupied neighbors, we consider ourselves occupied
 							goto next;
 						}
 					}
