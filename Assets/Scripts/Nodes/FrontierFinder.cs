@@ -1,0 +1,110 @@
+﻿using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+public class FrontierFinder : Node {
+
+	public string inputChannel = "undefined";
+	public string outputChannel = "frontiers";
+
+	public int growthFactor = 2;
+	
+	[Range(0,1)] public float visualizationAlpha = .5f;
+	public bool visualizeGrown = false;
+	public bool visualizeFronts = false;
+
+	ISub<OccupancyGrid> sub;
+	IPub<OccupancyGrid> pub;
+	public Color grownColor = Color.green;
+	public Color frontiersColor = Color.red;
+	public OccupancyGrid grown;
+	public OccupancyGrid frontiers;
+	// IPub<Marker> pub2;
+
+	void Awake() {
+		pub = MessageBus<OccupancyGrid>.PublishTo(outputChannel);
+	}
+	void OnEnable() {
+		sub = MessageBus<OccupancyGrid>.SubscribeTo(inputChannel, Handler);
+	}
+	void OnDisable() {
+		sub.Unsubscribe();
+	}
+
+	void OnDrawGizmos() {
+		if (visualizeGrown && grown.info != null) { grown.DrawGizmos(visualizationAlpha, null, grownColor, null); }	
+		if (visualizeFronts && frontiers.info != null) { frontiers.DrawGizmos(visualizationAlpha, null, null, frontiersColor); }	
+
+	}
+	void Handler(OccupancyGrid input) {
+		// Debug.Log($"Got a grid of {input}");
+		sbyte[] data = Grow(input, growthFactor);
+		grown = new OccupancyGrid(input.header, input.info, data);
+		
+		sbyte[] fronts = Find(grown);
+		frontiers = new OccupancyGrid(input.header, input.info, fronts);
+
+		pub.Publish(frontiers);
+	}
+
+	static sbyte[] Find(OccupancyGrid grown, int amt = 1) {
+		sbyte[] data = new sbyte[grown.size];
+		if (amt < 1) { amt = 1; }
+		for (int i = 0; i < grown.size; i++) {
+			Vector2Int pt = grown.IndexToGrid(i);
+			int x = pt.x;
+			int y = pt.y;
+
+			int occ = 0;
+			int unk = 0;
+			for (int xx = -amt; xx <= amt; xx++) {
+				for (int yy = -amt; yy <= amt; yy++) {
+					if (xx == 0 && yy == 0) { continue; }
+					int idx = grown.GridToIndex(x + xx, y + yy);
+					if (idx >= 0 && idx < grown.size) {
+						if (grown.data[idx] > 50) { occ++; }
+						if (grown.data[idx] < 0) { unk++; }
+					}
+				}
+			}
+			data[i] = -1;
+			sbyte sample = grown.data[i];
+			if (sample >= 0 && sample < 50) {
+				data[i] = (sbyte)((occ == 0 && unk > 0) ? 100 : -1);
+			}
+		}
+		return data;
+	}
+
+	static sbyte[] Grow(OccupancyGrid input, int amt = 1) {
+		sbyte[] data = new sbyte[input.size];
+		Array.Copy(input.data, data, data.Length);
+		if (amt < 1) { amt = 1; }
+		for (int i = 0; i < input.size; i++) {
+			Vector2Int pt = input.IndexToGrid(i);
+			int x = pt.x;
+			int y = pt.y;
+			// data[i] = input.data[i];
+
+			for (int xx = -amt; xx <= amt; xx++) {
+				for (int yy = -amt; yy <= amt; yy++) {
+					if (xx == 0 && yy == 0) { continue; }
+					int idx = input.GridToIndex(x + xx, y + yy);
+					if (idx >= 0 && idx < input.size) {
+						
+						if (input.data[idx] > 50) { 
+							data[i] = 100; 
+							goto next;
+						}
+					}
+				}
+			}
+
+			next:;;
+
+		}
+		return data;
+	}
+}
+

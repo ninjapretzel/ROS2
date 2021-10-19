@@ -15,17 +15,23 @@ public class LaserScan2Grid : Node {
 	public float resolution = 1.0f;
 	public Vector3 center = Vector3.zero;
 
+	[Range(0, 4.1f)]
+	public int fuzzyGrow = 1;
+	public float fuzzyStep = .33f;
+
 	public OccupancyGrid.Header header;
 	public OccupancyGrid.Info info;
 	public OccupancyGrid last; 
 
-	MessageBus<LaserScanner.ScanData>.Subscriber sub;
-	MessageBus<OccupancyGrid>.Publisher pub;
+	public bool visualizeGrid = false;
+	[Range(0,1)] public float visualizationAlpha = .7f;
+
+	ISub<LaserScanData> sub;
+	IPub<OccupancyGrid> pub;
 	void Awake() {
 		InitNode("LaserScanner", true);
 		
 		pub = MessageBus<OccupancyGrid>.PublishTo(gridPath);
-		sub = MessageBus<LaserScanner.ScanData>.SubscribeTo(scanPath, Convert);
 		
 		Vector3 origin = center - new Vector3(width, 0, height) * resolution  / 2f;
 		info = new OccupancyGrid.Info(width, height, resolution, origin);
@@ -37,29 +43,64 @@ public class LaserScan2Grid : Node {
 		last = new OccupancyGrid(header, info, initial);
 	}
 
-	public void Convert(LaserScanner.ScanData scan) {
+	void OnEnable() {
+		sub = MessageBus<LaserScanData>.SubscribeTo(scanPath, Convert);
+	}
+	void OnDisable() {
+		sub.Unsubscribe();
+	}
+	
 
+	public void Convert(LaserScanData scan) {
+		// Debug.Log($"Converting a scan with {scan.lines.Count} lasers");
 		header = header.Next();
 		sbyte[] data = new sbyte[info.size];
+		Array.Copy(last.data, data, info.size);
 		OccupancyGrid next = new OccupancyGrid(header, info, data);
-
-		for (int i = 0; i < scan.rays.Count; i++) {
-			Ray r = scan.rays[i];
-			Vector3 p = r.origin;
-			
-			
+		void ClearLine(LaserLine line) {
+			float d = 0; 
+			while (d < line.distance) {
+				d += info.resolution * fuzzyStep;
+				Vector3Int idx = next.WorldToGrid(line.ray.GetPoint(d));
+				int index = idx.x + idx.z * info.width;
+				if (index >= 0 && index < info.size) { data[index] = 0; }
+			}
+		}
+		void TerminateLine(LaserLine line, int grow = 1) {
+			if (grow < 0) { grow = 0; }
+			for (int x = -grow; x <= grow; x++) {
+				for (int z = -grow; z <= grow; z++) {
+					Vector3Int idx = next.WorldToGrid(line.end + new Vector3(x,0,z) * resolution * fuzzyStep);
+					int index = idx.x + idx.z * info.width;
+					if (index >= 0 && index < info.size) { data[index] = 100; }
+				}
+			}
 		}
 
-		
+		for (int i = 0; i < scan.lines.Count; i++) { ClearLine(scan.lines[i]); }
+		for (int i = 0; i < scan.lines.Count; i++) {  
+			if (scan.lines[i].hit) { TerminateLine(scan.lines[i], fuzzyGrow); }
+		}
+
 		pub.Publish(next);
+		last = next;
 	}
+
+	public void OnDrawGizmos() {
+
+		if (visualizeGrid && last.info != null) { last.DrawGizmos(visualizationAlpha); }
+
+	}
+
 }
 
+[System.Serializable]
 public class OccupancyGrid {
+	[System.Serializable]
 	public class Header {
-		public readonly string frame;
-		public readonly DateTime timestamp;
-		public readonly long seq;
+		public string frame;
+		public long seq;
+		public DateTime timestamp;
 		public Header(string frame) {
 			this.frame = frame;
 			timestamp = DateTime.UtcNow;
@@ -73,12 +114,18 @@ public class OccupancyGrid {
 		public Header Next() {
 			return new Header(this);
 		}
+		public override string ToString() {
+			return $"Header {{ frame: \"{frame}\", seq: {seq}, timestamp: {timestamp.UnixTimestamp()} }}";
+		}
 	}
+	[System.Serializable]
 	public class Info {
-		public readonly float resolution;
-		public readonly int width;
-		public readonly int height;
-		public readonly Vector3 origin;
+		public int width;
+		public int height;
+		public float resolution;
+		public Vector3 extents { get { return new Vector3(width, 0, height) * resolution / 2f; } }
+		public Vector3 center { get { return origin + extents;}}
+		public Vector3 origin;
 		public int size { get { return width * height; } }
 		public Info(int width, int height, float resolution, Vector3 origin) {
 			this.width = width;
@@ -86,15 +133,20 @@ public class OccupancyGrid {
 			this.resolution = resolution;
 			this.origin = origin;
 		}
+		public override string ToString() {
+			return $"Info {{ width: {width}, height: {height}, resolution: {resolution}, origin: {origin} }}";
+		}
 	}
-	public readonly Info info;
-	public readonly Header header;
+	public Info info;
+	public Header header;
 	public int width { get { return info.width; } }
 	public int height { get { return info.height; } }
 	public float resolution { get { return info.resolution; } }
 	public int size { get { return width * height; } }
+	public Vector3 extents { get { return info.extents; } }
+	public Vector3 center { get { return info.center; } }
 	public Vector3 origin { get { return info.origin; } }
-	public readonly sbyte[] data;
+	public sbyte[] data;
 
 	public OccupancyGrid(Header header, Info info, sbyte[] data) {
 		this.info = info;
@@ -104,15 +156,45 @@ public class OccupancyGrid {
 		}
 		this.data = data;
 	}
-	public Vector3Int Translate(Vector3 pt) {
-		Vector3 d = pt-origin;
-		Vector3Int idx = Vector3Int.zero;
-		d /= resolution;
-		idx.x = (int)d.x;
-		idx.y = (int)pt.y;
-		idx.z = (int)d.z;
 
-		return idx;
+	public Vector3Int WorldToGrid(float x, float y, float z) { return WorldToGrid(new Vector3(x,y,z)); }
+	public Vector3Int WorldToGrid(Vector3 pt) {
+		Vector3 d = (pt-origin)/resolution;
+		return new Vector3Int((int)d.x, (int)d.y, (int)d.z);
+	}
+	public Vector3 GridToWorld(int x, int y, int z) { return GridToWorld(new Vector3Int(x,y,z)); }
+	public Vector3 GridToWorld(Vector3Int idx) {
+		return ((Vector3)idx) * resolution + origin;;
+	}
+
+	public int GridToIndex(int x, int y) { return x + y * width; }
+	public Vector2Int IndexToGrid(int i) { return new Vector2Int(i % width, i / width); }
+
+	public override string ToString() {
+		return $"OccupancyGrid {{\n\theader:{header},\n\tinfo:{info},\n\tdata: [ ...{size}... ]\n}}";
+	}
+
+	public void DrawGizmos(float visualizationAlpha, Color? bg = null, Color? opn = null, Color? occ = null) {
+		Color background = bg ?? new Color(.5f, .5f, .5f);
+		background.a = visualizationAlpha;
+		Gizmos.color = background;
+		Gizmos.DrawCube(center, extents * 2f);
+
+		Color occupied = occ ?? new Color(0,0,0);
+		Color open = opn ?? new Color(1,1,1);
+
+		for (int i = 0; i < info.size; i++) {
+			if (data[i] >= 0) {
+				float f = 1f - data[i] / 100f;
+				Color c = Color.Lerp(occupied, open, f);
+				c.a = visualizationAlpha;
+				Gizmos.color = c;
+				int x = i % info.width;
+				int z = i / info.width;
+				Vector3 pt = GridToWorld(x, 0, z) + Vector3.one * info.resolution * .5f; ;
+				Gizmos.DrawCube(pt, Vector3.one * info.resolution);
+			}
+		}
 	}
 
 }

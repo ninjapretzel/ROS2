@@ -14,9 +14,16 @@ internal static class MessageBus {
 	}
 }
 
+public interface IPub<T> {
+	void Publish(T t);
+}
+public interface ISub<T> { 
+	void Unsubscribe();
+}
+
 public static class MessageBus<T> {
-	public class Publisher {
-		private string path;
+	public class Publisher : IPub<T> {
+		private readonly string path;
 		internal Publisher(string path) {
 			this.path = path;
 		}
@@ -26,10 +33,12 @@ public static class MessageBus<T> {
 			}
 		}
 	}
-	public class Subscriber {
-		private Action<T> callback;
-		internal Subscriber(Action<T> callback) {
+	public class Subscriber : ISub<T> {
+		private readonly Action<T> callback;
+		private readonly string path;
+		internal Subscriber(string path, Action<T> callback) {
 			this.callback = callback;
+			this.path = path;
 		}
 		internal void On(T t) { 
 			try {
@@ -37,6 +46,9 @@ public static class MessageBus<T> {
 			} catch (Exception e) {
 				Debug.LogError($"Error in callback for Subscriber{typeof(T)}: {e.GetType()}\n{e}");
 			}
+		}
+		public void Unsubscribe() {
+			subscribers[path].Remove(this);
 		}
 	}
 	
@@ -49,7 +61,7 @@ public static class MessageBus<T> {
 		if (!subscribers.ContainsKey(path)) {
 			subscribers[path] = new ConcurrentSet<Subscriber>();
 		}
-		Subscriber s = new Subscriber(callback);
+		Subscriber s = new Subscriber(path, callback);
 		subscribers[path].Add(s);
 		return s;
 	}
