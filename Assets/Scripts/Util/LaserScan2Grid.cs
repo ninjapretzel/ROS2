@@ -91,7 +91,7 @@ public class OccupancyGrid {
 	public readonly Header header;
 	public int width { get { return info.width; } }
 	public int height { get { return info.height; } }
-	public int resolution { get { return info.resolution; } }
+	public float resolution { get { return info.resolution; } }
 	public int size { get { return width * height; } }
 	public Vector3 origin { get { return info.origin; } }
 	public readonly sbyte[] data;
