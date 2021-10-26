@@ -7,11 +7,12 @@ public struct LaserLine {
 	public readonly float distance;
 	public readonly Ray ray;
 	public readonly bool hit;
+	public readonly float angle;
 	public Vector3 origin { get { return ray.origin; } }
 	public Vector3 direction { get { return ray.direction; } }
 	public Vector3 end { get { return origin + direction * distance; } }
-	public LaserLine(Ray r, float d, bool h) { distance = d; ray = r; hit = h; }
-	public static implicit operator LaserLine((Ray r, float d, bool h) _) { return new LaserLine(_.r, _.d, _.h); }
+	public LaserLine(float a, Ray r, float d, bool h) { angle = a; distance = d; ray = r; hit = h; }
+	public static implicit operator LaserLine((float a, Ray r, float d, bool h) _) { return new LaserLine(_.a, _.r, _.d, _.h); }
 }
 [System.Serializable]
 public class LaserScanData {
@@ -80,7 +81,7 @@ public class LaserScanner : Node {
 				}
 			}
 			
-			scan.lines.Add((ray, dist, hit));
+			scan.lines.Add((angle, ray, dist, hit));
 			if (visualizeLine) {
 				Debug.DrawLine(p, p+dir.normalized * (dist > 0 ? dist : maxDist), dist > 0 ? Color.green : Color.red, delay);
 				// Debug.DrawLine(p, Random.insideUnitSphere * .1f + dir.normalized * (dist > 0 ? dist : maxDist), dist > 0 ? Color.green : Color.red, delay);
