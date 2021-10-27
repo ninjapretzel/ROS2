@@ -29,6 +29,7 @@ public class FrontierClusterer : Node {
 	public string markerChannel = "frontier_markers";
 	public string targetChannel = "moveTargets";
 
+	public int nClusters = 4;
 	public Marker[] markers;
 	public bool visualize = false;
 	IPub<Marker[]> markerPub;
@@ -59,8 +60,7 @@ public class FrontierClusterer : Node {
 				points.Add(pt);
 			}
 		}
-		int nClusters = 4;
-		if (points.Count == 0) { return; }
+		if (points.Count < nClusters) { return; }
 		int[] clusters = KMeans.Cluster(points.ToArray(), nClusters);
 		List<Vector4>[] cs = new List<Vector4>[nClusters];
 		for (int i = 0; i < cs.Length; i++) { cs[i] = new List<Vector4>(); }
