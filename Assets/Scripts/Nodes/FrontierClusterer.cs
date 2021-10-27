@@ -60,6 +60,7 @@ public class FrontierClusterer : Node {
 			}
 		}
 		int nClusters = 4;
+		if (points.Count == 0) { return; }
 		int[] clusters = KMeans.Cluster(points.ToArray(), nClusters);
 		List<Vector4>[] cs = new List<Vector4>[nClusters];
 		for (int i = 0; i < cs.Length; i++) { cs[i] = new List<Vector4>(); }
