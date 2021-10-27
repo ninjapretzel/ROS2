@@ -12,7 +12,7 @@ public static class KMeans {
 		bool success = true;
 		int[] clustering = InitClustering(data.Length, clusters, seed);
 		Vector4[] means = new Vector4[clusters];
-		int maxCount = raw.Length * 10;
+		int maxCount = raw.Length * 100;
 		int ct = 0;
 
 		while (changed && success && ct < maxCount) {
