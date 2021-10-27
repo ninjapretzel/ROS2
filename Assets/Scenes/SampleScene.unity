@@ -750,6 +750,8 @@ GameObject:
   - component: {fileID: 584332903}
   - component: {fileID: 584332904}
   - component: {fileID: 584332905}
+  - component: {fileID: 584332906}
+  - component: {fileID: 584332907}
   m_Layer: 0
   m_Name: Robot
   m_TagString: Untagged
@@ -850,7 +852,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 584332897}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -914,6 +916,7 @@ MonoBehaviour:
   rate: 1
   inputChannel: undefined
   outputChannel: frontiers
+  grownChannel: grown
   growthFactor: 2
   visualizationAlpha: 0.5
   visualizeGrown: 1
@@ -955,9 +958,49 @@ MonoBehaviour:
   nodeName: 
   rate: 1
   inputChannel: frontiers
-  outputChannel: frontiers
+  markerChannel: frontier_markers
+  targetChannel: moveTargets
   markers: []
   visualize: 1
+--- !u!114 &584332906
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584332897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: beacf4f8d444cd3408a9e4464c295e94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridChannel: grown
+  targetChannel: moveTargets
+  pathChannel: path
+  grid:
+    info:
+      width: 0
+      height: 0
+      resolution: 0
+      origin: {x: 0, y: 0, z: 0}
+    header:
+      frame: 
+      seq: 0
+    data: 
+--- !u!114 &584332907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 584332897}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d49205465b54f54eb96dbaf1d92d865, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pathChannel: path
+  speed: 1.1
 --- !u!1 &596517355
 GameObject:
   m_ObjectHideFlags: 0
