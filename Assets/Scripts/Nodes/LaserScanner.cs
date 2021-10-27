@@ -20,11 +20,19 @@ public class LaserScanData {
 	public LaserScanData() {
 		lines = new List<LaserLine>();
 	}
+	public void Visualize(float alpha) {
+		Color c = Color.green;
+		c.a = alpha;
+		Gizmos.color = c;
+
+		foreach (var line in lines) {
+			Gizmos.DrawLine(line.ray.origin, line.ray.origin + line.ray.direction * line.distance);
+		}
+	}
 }
 
 public class LaserScanner : Node {
 	
-
 	public string channel = "undefined";
 	const float TAU = Mathf.PI * 2;
 	public float maxDist = 50f;
@@ -33,11 +41,7 @@ public class LaserScanner : Node {
 	public float offset = .1f;
 	[Range(0, .5f)] public float laserWobble = .1f;
 	public float uncertainty { get { return .01f * laserWobble; } }
-
-	public bool visualizeLine = false;
-	public bool visualizeHit = false;
-	[Range(0, 1)] public float showHitChance = .2f;
-	
+		
 	IPub<LaserScanData> pub;
 
 	void Awake() {
@@ -70,23 +74,8 @@ public class LaserScanner : Node {
 			bool hit;
 			if (hit = Physics.Raycast(ray, out rayhit, maxDist)) {
 				if (rayhit.distance > 0 && rayhit.distance < dist) { dist = rayhit.distance; }
-
-				if (visualizeHit && Random.value < showHitChance) {
-					Debug.DrawLine(rayhit.point, rayhit.point+Vector3.up + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-					Debug.DrawLine(rayhit.point, rayhit.point-Vector3.up + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-					Debug.DrawLine(rayhit.point, rayhit.point+Vector3.right + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-					Debug.DrawLine(rayhit.point, rayhit.point-Vector3.right + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-					Debug.DrawLine(rayhit.point, rayhit.point+Vector3.forward + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-					Debug.DrawLine(rayhit.point, rayhit.point-Vector3.forward + Random.insideUnitSphere * uncertainty, Color.red, delay); 
-				}
 			}
-			
 			scan.lines.Add((angle, ray, dist, hit));
-			if (visualizeLine) {
-				Debug.DrawLine(p, p+dir.normalized * (dist > 0 ? dist : maxDist), dist > 0 ? Color.green : Color.red, delay);
-				// Debug.DrawLine(p, Random.insideUnitSphere * .1f + dir.normalized * (dist > 0 ? dist : maxDist), dist > 0 ? Color.green : Color.red, delay);
-			}
-
 		}
 
 		pub.Publish(scan);	

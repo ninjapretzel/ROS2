@@ -25,18 +25,21 @@ public static class MessageBus<T> {
 	public class Publisher : IPub<T> {
 		private readonly bool latched;
 		private readonly string path;
+		private bool hasValue = false;
 		private T latchedValue;
+		public bool HasValue { get { return hasValue; } }
 		public bool Latched { get { return latched; } }
 		public T LatchedValue { get {
 				if (latched) { return latchedValue; }
 				throw new Exception($"MessageBus<{typeof(T)}>.Publisher: Cannot get latched value from non-latched publisher.");
 		} }
-		internal Publisher(string path, bool latched = false) {
+		internal Publisher(string path, bool latched = true) {
 			this.path = path;
 			this.latched = latched;
 			latchedValue = default(T);
 		}
 		public void Publish(T t) {
+			hasValue = true;
 			if (subscribers.ContainsKey(path)) {
 				foreach (var sub in subscribers[path]) { sub.On(t); }
 			}
@@ -75,12 +78,12 @@ public static class MessageBus<T> {
 		subscribers[path].Add(s);
 		if (publishers.ContainsKey(path)) {
 			var pub = publishers[path];
-			if (pub.Latched) { s.On(pub.LatchedValue); }
+			if (pub.Latched && pub.HasValue) { s.On(pub.LatchedValue); }
 		}
 		return s;
 	}
 
-	public static Publisher PublishTo(string path, bool latched = false) {
+	public static Publisher PublishTo(string path, bool latched = true) {
 		if (!publishers.ContainsKey(path)) { publishers[path] = new Publisher(path, latched); }
 		return publishers[path];		
 	}

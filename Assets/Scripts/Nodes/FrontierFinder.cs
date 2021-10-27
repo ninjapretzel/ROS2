@@ -11,15 +11,9 @@ public class FrontierFinder : Node {
 
 	public int growthFactor = 2;
 	
-	[Range(0,1)] public float visualizationAlpha = .5f;
-	public bool visualizeGrown = false;
-	public bool visualizeFronts = false;
-
 	ISub<OccupancyGrid> sub;
 	IPub<OccupancyGrid> frontierPub;
 	IPub<OccupancyGrid> grownPub;
-	public Color grownColor = Color.green;
-	public Color frontiersColor = Color.red;
 	public OccupancyGrid grown;
 	public OccupancyGrid frontiers;
 	
@@ -34,20 +28,16 @@ public class FrontierFinder : Node {
 		sub.Unsubscribe();
 	}
 
-	void OnDrawGizmos() {
-		if (visualizeGrown && grown.info != null) { grown.DrawGizmos(visualizationAlpha, null, grownColor, null); }	
-		if (visualizeFronts && frontiers.info != null) { frontiers.DrawGizmos(visualizationAlpha, null, null, frontiersColor); }	
-
-	}
 	void Handler(OccupancyGrid input) {
 		// Debug.Log($"Got a grid of {input}");
 		sbyte[] data = Grow(input, growthFactor);
 		grown = new OccupancyGrid(input.header, input.info, data);
+		grown.opn = Color.green;
 		
-
 		grownPub.Publish(grown);
 		sbyte[] fronts = Find(grown);
 		frontiers = new OccupancyGrid(input.header, input.info, fronts);
+		frontiers.occ = Color.red;
 
 		// for some reason in ros, you have to reuse the input OccupancyGrid
 		// input.data = fronts; // in ROS , just reassign the `OccupancyGrid.data` field

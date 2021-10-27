@@ -12,16 +12,33 @@ public class Marker {
 	public const int SPHERE = 0;
 	public const int CUBE = 1;
 
-	public void DrawGizmo() {
-		Gizmos.color = color;
-		if (kind == SPHERE) {
-			Gizmos.DrawSphere(point, size.magnitude);
-		}
-		if (kind == CUBE) {
-			Gizmos.DrawCube(point, size);
+	public void Visualize(float alpha) {
+		Color c = color;
+		c.a *= alpha;
+		Gizmos.color = c;
+		if (kind == SPHERE) { Gizmos.DrawSphere(point, size.magnitude); }
+		if (kind == CUBE) { Gizmos.DrawCube(point, size); }
+	}
+}
+
+public class Markers : IEnumerable<Marker> {
+	public Markers(params Marker[] markers) {
+		this.markers = markers;
+	}
+	public int Length { get { return markers.Length; } }
+	public Marker this[int i] {
+		get { return markers[i]; }
+		set { markers[i] = value; }
+	}
+	private Marker[] markers;
+	public void Visualize(float alpha) {
+		foreach (var marker in markers) {
+			marker.Visualize(alpha);
 		}
 	}
 
+	public IEnumerator<Marker> GetEnumerator() { return (IEnumerator<Marker>)markers.GetEnumerator(); }
+	IEnumerator IEnumerable.GetEnumerator() { return markers.GetEnumerator(); }
 }
 
 public class FrontierClusterer : Node {
@@ -30,13 +47,13 @@ public class FrontierClusterer : Node {
 	public string targetChannel = "moveTargets";
 
 	public int nClusters = 4;
-	public Marker[] markers;
+	public Markers markers;
 	public bool visualize = false;
-	IPub<Marker[]> markerPub;
+	IPub<Markers> markerPub;
 	IPub<Vector3> targetPub;
 	ISub<OccupancyGrid> sub;
 	void Awake() {
-		markerPub = MessageBus<Marker[]>.PublishTo(markerChannel);
+		markerPub = MessageBus<Markers>.PublishTo(markerChannel);
 		targetPub = MessageBus<Vector3>.PublishTo(targetChannel);
 	}
 	void OnEnable() {
@@ -44,11 +61,6 @@ public class FrontierClusterer : Node {
 	}
 	void OnDisable() {
 		sub.Unsubscribe();
-	}
-	void OnDrawGizmos() {
-		if (visualize && markers != null && markers.Length > 0) {
-			foreach(var marker in markers) { marker.DrawGizmo(); }
-		}	
 	}
 
 	void Handler(OccupancyGrid input) {
@@ -66,7 +78,8 @@ public class FrontierClusterer : Node {
 		for (int i = 0; i < cs.Length; i++) { cs[i] = new List<Vector4>(); }
 		for (int i = 0; i < clusters.Length; i++) { cs[clusters[i]].Add(points[i]); }
 
-		markers = new Marker[nClusters];
+		var mks = new Marker[nClusters];
+		markers = new Markers(mks);
 		for (int i = 0; i < cs.Length; i++) {
 			Vector4 avg = Vector4.zero;
 			for (int k = 0; k < cs[i].Count; k++) {

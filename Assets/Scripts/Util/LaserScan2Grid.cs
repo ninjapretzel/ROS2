@@ -23,9 +23,6 @@ public class LaserScan2Grid : Node {
 	public OccupancyGrid.Info info;
 	public OccupancyGrid last; 
 
-	public bool visualizeGrid = false;
-	[Range(0,1)] public float visualizationAlpha = .7f;
-
 	ISub<LaserScanData> sub;
 	IPub<OccupancyGrid> pub;
 	void Awake() {
@@ -84,12 +81,6 @@ public class LaserScan2Grid : Node {
 
 		pub.Publish(next);
 		last = next;
-	}
-
-	public void OnDrawGizmos() {
-
-		if (visualizeGrid && last.info != null) { last.DrawGizmos(visualizationAlpha); }
-
 	}
 
 }
@@ -151,6 +142,11 @@ public class OccupancyGrid {
 	public sbyte this[int x, int y] { get { return this[x+y*width]; } }
 	public sbyte this[int i] { get { return (i >= 0 && i < size) ? data[i] : (sbyte)100; } }
 
+
+	public Color? bg = null;
+	public Color? opn = null;
+	public Color? occ = null;
+
 	public OccupancyGrid(Header header, Info info, sbyte[] data) {
 		this.info = info;
 		this.header = header;
@@ -192,10 +188,12 @@ public class OccupancyGrid {
 		return $"OccupancyGrid {{\n\theader:{header},\n\tinfo:{info},\n\tdata: [ ...{size}... ]\n}}";
 	}
 
-	public void DrawGizmos(float visualizationAlpha, Color? bg = null, Color? opn = null, Color? occ = null) {
+	public void Visualize(float visualizationAlpha) {
 		Color background = bg ?? new Color(.5f, .5f, .5f);
 		background.a = visualizationAlpha;
+		background.a *= visualizationAlpha;
 		Gizmos.color = background;
+		
 		Gizmos.DrawCube(center, extents * 2f);
 
 		Color occupied = occ ?? new Color(0,0,0);
@@ -216,6 +214,7 @@ public class OccupancyGrid {
 				Gizmos.DrawCube(pt, size);
 			}
 		}
+
 	}
 
 }
