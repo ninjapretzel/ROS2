@@ -43,7 +43,6 @@ public class Pathfinder : MonoBehaviour {
 		if (target != null && grid != null) {
 			Vector2Int st = grid.WorldXZToGrid(transform.position);
 			Vector2Int tg = grid.WorldXZToGrid(target.Value);
-			Debug.Log($"Have target and grid, finding path between {st} and {tg}");
 
 			var result = AStar.Pathfind(st, tg, grid);
 			
