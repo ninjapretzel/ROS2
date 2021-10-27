@@ -7,6 +7,7 @@ public class FrontierFinder : Node {
 
 	public string inputChannel = "undefined"; // would be "/map" in ros
 	public string outputChannel = "frontiers"; // would be "/frontier_map" in ros
+	public string grownChannel = "grown"; 
 
 	public int growthFactor = 2;
 	
@@ -15,14 +16,16 @@ public class FrontierFinder : Node {
 	public bool visualizeFronts = false;
 
 	ISub<OccupancyGrid> sub;
-	IPub<OccupancyGrid> pub;
+	IPub<OccupancyGrid> frontierPub;
+	IPub<OccupancyGrid> grownPub;
 	public Color grownColor = Color.green;
 	public Color frontiersColor = Color.red;
 	public OccupancyGrid grown;
 	public OccupancyGrid frontiers;
 	
 	void Awake() {
-		pub = MessageBus<OccupancyGrid>.PublishTo(outputChannel);
+		frontierPub = MessageBus<OccupancyGrid>.PublishTo(outputChannel);
+		grownPub = MessageBus<OccupancyGrid>.PublishTo(grownChannel);
 	}
 	void OnEnable() {
 		sub = MessageBus<OccupancyGrid>.SubscribeTo(inputChannel, Handler); // in ros, this is just "/map"
@@ -41,13 +44,15 @@ public class FrontierFinder : Node {
 		sbyte[] data = Grow(input, growthFactor);
 		grown = new OccupancyGrid(input.header, input.info, data);
 		
+
+		grownPub.Publish(grown);
 		sbyte[] fronts = Find(grown);
 		frontiers = new OccupancyGrid(input.header, input.info, fronts);
 
 		// for some reason in ros, you have to reuse the input OccupancyGrid
 		// input.data = fronts; // in ROS , just reassign the `OccupancyGrid.data` field
 
-		pub.Publish(frontiers);
+		frontierPub.Publish(frontiers);
 	}
 
 	static sbyte[] Find(OccupancyGrid grown, int amt = 1) {

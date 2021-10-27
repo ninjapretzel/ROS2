@@ -26,13 +26,17 @@ public class Marker {
 
 public class FrontierClusterer : Node {
 	public string inputChannel = "frontiers";
-	public string outputChannel = "frontiers";
+	public string markerChannel = "frontier_markers";
+	public string targetChannel = "moveTargets";
+
 	public Marker[] markers;
 	public bool visualize = false;
-	IPub<Marker[]> pub;
+	IPub<Marker[]> markerPub;
+	IPub<Vector3> targetPub;
 	ISub<OccupancyGrid> sub;
 	void Awake() {
-		pub = MessageBus<Marker[]>.PublishTo(outputChannel);
+		markerPub = MessageBus<Marker[]>.PublishTo(markerChannel);
+		targetPub = MessageBus<Vector3>.PublishTo(targetChannel);
 	}
 	void OnEnable() {
 		sub = MessageBus<OccupancyGrid>.SubscribeTo(inputChannel, Handler);
@@ -72,7 +76,8 @@ public class FrontierClusterer : Node {
 			markers[i] = new Marker() { point=avg, size=Vector3.one, color=Color.magenta, kind = Marker.SPHERE };
 			
 		}
-		pub.Publish(markers);
+		markerPub.Publish(markers);
+		targetPub.Publish(markers[0].point);
 	}
 
 	

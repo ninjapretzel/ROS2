@@ -147,6 +147,9 @@ public class OccupancyGrid {
 	public Vector3 center { get { return info.center; } }
 	public Vector3 origin { get { return info.origin; } }
 	public sbyte[] data;
+	public sbyte this[Vector2Int p] { get { return this[p.x, p.y]; } }
+	public sbyte this[int x, int y] { get { return this[x+y*width]; } }
+	public sbyte this[int i] { get { return (i >= 0 && i < size) ? data[i] : (sbyte)100; } }
 
 	public OccupancyGrid(Header header, Info info, sbyte[] data) {
 		this.info = info;
@@ -162,6 +165,21 @@ public class OccupancyGrid {
 		Vector3 d = (pt-origin)/resolution;
 		return new Vector3Int((int)d.x, (int)d.y, (int)d.z);
 	}
+
+	public Vector2Int WorldXZToGrid(float x, float y, float z) { return WorldXZToGrid(new Vector3(x,y,z)); }
+	public Vector2Int WorldXZToGrid(Vector3 pt) { 
+		Vector3 d = (pt-origin)/resolution;
+		return new Vector2Int((int)d.x, (int)d.z);
+	}
+	public Vector2Int WorldXYToGrid(float x, float y, float z) { return WorldXZToGrid(new Vector3(x, y, z)); }
+	public Vector2Int WorldXYToGrid(Vector3 pt) {
+		Vector3 d = (pt - origin) / resolution;
+		return new Vector2Int((int)d.x, (int)d.y);
+	}
+
+	public Vector3 GridToWorldXZ(Vector2Int idx) { return GridToWorld(new Vector3Int(idx.x, 0, idx.y)); }
+	public Vector3 GridToWorldXY(Vector2Int idx) { return GridToWorld(new Vector3Int(idx.x, idx.y, 0)); }
+
 	public Vector3 GridToWorld(int x, int y, int z) { return GridToWorld(new Vector3Int(x,y,z)); }
 	public Vector3 GridToWorld(Vector3Int idx) {
 		return ((Vector3)idx) * resolution + origin;;
