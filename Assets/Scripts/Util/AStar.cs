@@ -63,8 +63,7 @@ public static class AStar {
 			return m.Value;
 		}
 
-
-
+		int safety = 10000;
 		while (!openSet.IsEmpty) {
 			var current = min();
 			if (current == goal) { return ReconstructPath(cameFrom, current); }
@@ -85,7 +84,7 @@ public static class AStar {
 					}
 				}
 			}
-
+			if (safety-- < 0) { Debug.LogWarning("AStar: Exited pathfinding with safetywall..."); break; }
 		}
 		
 
