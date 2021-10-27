@@ -30,9 +30,13 @@ public class DirectlyFollowPath : MonoBehaviour {
 	void Update() {
 		if (targets != null && targets.Count > 1 && i < targets.Count) {
 			Vector3 target = targets[i] + offset;
-
-			transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
+			Vector3 pos = transform.position;
+			Vector3 newPos = transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
 			if ((target-transform.position).sqrMagnitude < .1) { i++; }
+
+			Quaternion oldRot = transform.rotation;
+			transform.LookAt(transform.position + (newPos - pos));
+			transform.rotation = Quaternion.Slerp(oldRot, transform.rotation, Time.deltaTime * 11);
 
 		}
 	}
