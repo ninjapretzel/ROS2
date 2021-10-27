@@ -30,10 +30,10 @@ public static class AStar {
 	}
 
 	public static List<Vector2Int> Pathfind(Vector2Int start, Vector2Int goal, OccupancyGrid grid) {
+		if (grid[start] >= 100) { return null; }
 		Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
 		ConcurrentSet<Vector2Int> openSet = new ConcurrentSet<Vector2Int>();
 		openSet.Add(start);
-
 
 		// Heuristic function
 		Scores gScore = new Scores();
@@ -47,9 +47,12 @@ public static class AStar {
 			return Mathf.Abs(diff.x) + Mathf.Abs(diff.y);
 		}
 		float h(Vector2Int point) {
-			if (fScore.ContainsKey(point)) { return fScore[point]; }
-			if (gScore.ContainsKey(point)) { return gScore[point]; }
-			return d(start, point);
+			//if (fScore.ContainsKey(point)) { return fScore[point]; }
+			//if (gScore.ContainsKey(point)) { return gScore[point]; }
+			// return d(start, point);
+			if (fScore.ContainsKey(point)) { return fScore[point] + d(point, goal); }
+			// if (gScore.ContainsKey(point)) { return gScore[point] + d(point, goal); }
+			return d(point, goal);
 		}
 		Vector2Int min() {
 			Vector2Int? m = null;
@@ -63,7 +66,7 @@ public static class AStar {
 			return m.Value;
 		}
 
-		int safety = 10000;
+		int safetyWall = 20000;
 		while (!openSet.IsEmpty) {
 			var current = min();
 			if (current == goal) { return ReconstructPath(cameFrom, current); }
@@ -72,19 +75,29 @@ public static class AStar {
 			for (int x = -1; x <= 1; x++) {
 				for (int y = -1; y <= 1; y++) {
 					if (x == 0 && y == 0) { continue; }
-					var neighbor = new Vector2Int(current.x + x, current.y + y);
-					var tgScore = gScore[current] + d(current, neighbor);
-					if (tgScore < gScore[neighbor]) {
-						cameFrom[neighbor] = current;
-						gScore[neighbor] = tgScore;
-						fScore[neighbor] = tgScore + h(neighbor);
-						if (!openSet.Contains(neighbor)) {
-							openSet.Add(neighbor);
+					int nx = current.x + x; int ny = current.y + y;
+					if (nx >= 0 && nx < grid.width && ny >= 0 && ny < grid.height) {
+
+						var neighbor = new Vector2Int(nx, ny);
+						if (grid[neighbor] >= 100) { continue; }
+						var tgScore = gScore[current] + d(current, neighbor);
+						
+						if (tgScore < gScore[neighbor]) {
+							cameFrom[neighbor] = current;
+							gScore[neighbor] = tgScore;
+							float hn = h(neighbor);
+							if (float.IsPositiveInfinity(hn)) { continue; }
+							fScore[neighbor] = tgScore + hn;
+							
+							if (!openSet.Contains(neighbor)) {
+								openSet.Add(neighbor);
+							}
 						}
 					}
 				}
 			}
-			if (safety-- < 0) { Debug.LogWarning("AStar: Exited pathfinding with safetywall..."); break; }
+
+			if (safetyWall-- < 0) { Debug.LogWarning("AStar: Exited pathfinding with safetywall..."); break; }
 		}
 		
 
