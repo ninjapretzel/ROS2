@@ -188,10 +188,9 @@ public class OccupancyGrid {
 		return $"OccupancyGrid {{\n\theader:{header},\n\tinfo:{info},\n\tdata: [ ...{size}... ]\n}}";
 	}
 
-	public void Visualize(float visualizationAlpha) {
+	public void Visualize(float alpha) {
 		Color background = bg ?? new Color(.5f, .5f, .5f);
-		background.a = visualizationAlpha;
-		background.a *= visualizationAlpha;
+		background.a = alpha * alpha * alpha * alpha;
 		Gizmos.color = background;
 		
 		Gizmos.DrawCube(center, extents * 2f);
@@ -206,7 +205,7 @@ public class OccupancyGrid {
 			if (data[i] >= 0) {
 				float f = 1f - data[i] / 100f;
 				Color c = Color.Lerp(occupied, open, f);
-				c.a = visualizationAlpha;
+				c.a = alpha;
 				Gizmos.color = c;
 				int x = i % info.width;
 				int z = i / info.width;
