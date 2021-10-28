@@ -23,7 +23,7 @@ public class Pathfinder : MonoBehaviour {
 	public string pathChannel = "path";
 
 	ISub<OccupancyGrid> gridSub;
-	ISub<Vector3> targetSub;
+	ISub<Marker> targetSub;
 	IPub<Path> pathPub;
 
 	public OccupancyGrid grid;
@@ -31,7 +31,7 @@ public class Pathfinder : MonoBehaviour {
 
 	void OnEnable() {
 		gridSub = MessageBus<OccupancyGrid>.SubscribeTo(gridChannel, OnGrid);
-		targetSub = MessageBus<Vector3>.SubscribeTo(targetChannel, OnTarget);
+		targetSub = MessageBus<Marker>.SubscribeTo(targetChannel, OnTarget);
 		pathPub = MessageBus<Path>.PublishTo(pathChannel);
 	}
 	void OnDisable() {
@@ -46,8 +46,8 @@ public class Pathfinder : MonoBehaviour {
 		if (target != null) { UpdatePath(); }
 	}
 
-	void OnTarget(Vector3 target) {
-		this.target = target;
+	void OnTarget(Marker target) {
+		this.target = target.point;
 		if (grid != null) { UpdatePath(); }
 	}
 
