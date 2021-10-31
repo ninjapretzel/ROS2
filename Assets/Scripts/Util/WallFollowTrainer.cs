@@ -135,8 +135,9 @@ public class WallFollowTrainer : MonoBehaviour {
 	void PrepareSim() {
 		wallFollow.transform.position = wallFollow.pos = initialPosition;
 		wallFollow.transform.rotation = wallFollow.rot = Quaternion.Euler(0, initialRotation, 0);
-		Debug.Log($"Teleported robot to {wallFollow.transform.position} / {wallFollow.transform.rotation}");// 
 		trial++;
+		Debug.Log($"Setting up trial {trial} @ generation {generation}");
+		//Debug.Log($"Teleported robot to {wallFollow.transform.position} / {wallFollow.transform.rotation}");
 		wallFollow.qt = Mutate(best);
 		currentScore = 0;
 		noScore = 0;
