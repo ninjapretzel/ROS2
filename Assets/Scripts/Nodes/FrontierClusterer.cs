@@ -103,7 +103,7 @@ public class FrontierClusterer : Node {
 			avg /= cs[i].Count;
 			markers[i] = new Marker() { point=avg, size=Vector3.one, color=Color.magenta, kind = Marker.SPHERE };
 			
-			Vector3 diff = transform.position - (Vector3)avg;
+			Vector3 diff = pos - (Vector3)avg;
 			if (diff.sqrMagnitude < dist) {
 				closest = i;
 				dist = diff.sqrMagnitude;

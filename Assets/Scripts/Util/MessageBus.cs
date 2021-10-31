@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System;
+using System.Threading;
+using UnityEditor;
 
 /// <summary> Keeps track of what message types have been initialized so far. </summary>
 public static class MessageBus {
@@ -12,6 +14,59 @@ public static class MessageBus {
 		publishers[t] = pubs;
 		subscribers[t] = subs;
 	}
+
+	private static ConcurrentQueue<Action> todo = new ConcurrentQueue<Action>();
+	public static void RunOnMain(Action a) {
+		todo.Enqueue(a);
+	}
+
+	public static Thread running;
+	public static readonly bool init = Init();
+	private static bool Init() {
+		running = new Thread(Run);
+		running.Start();
+		return true;
+	}
+	private static void Run() {
+		while (true) {
+			try {
+				RunQueuedActions();
+				foreach (var pair in subscribers) {
+					Type key = pair.Key;
+					IEnumerable allSubs = pair.Value;
+					foreach (dynamic pair2 in allSubs) { 
+						string channel = pair2.Key;
+						IEnumerable subs = pair2.Value;
+						foreach (dynamic sub in subs) {
+							sub.Run();
+						}
+					}
+				}
+
+
+			}
+			catch (ThreadAbortException) { }
+			catch (Exception e) {
+				Debug.LogWarning($"Error in run loop: {e}"); 
+				//RunOnMain(() => {
+				//});
+			}
+		}
+	}
+
+	private static void RunQueuedActions() {
+		while (!todo.IsEmpty) {
+			Action a;
+			if (todo.TryDequeue(out a)) {
+				try {
+					a();
+				} catch (Exception e) {
+					Debug.LogError($"MessageBus.Step(): Error during step: {e.GetType()} /\n{e}");
+				}
+			}
+		}
+	}
+
 }
 
 public interface IPub<T> {
@@ -49,15 +104,27 @@ public static class MessageBus<T> {
 	public class Subscriber : ISub<T> {
 		private readonly Action<T> callback;
 		private readonly string path;
+		private readonly ConcurrentQueue<T> queue;
 		internal Subscriber(string path, Action<T> callback) {
 			this.callback = callback;
 			this.path = path;
+			queue = new ConcurrentQueue<T>();
 		}
 		internal void On(T t) { 
-			try {
-				callback(t);
-			} catch (Exception e) {
-				Debug.LogError($"Error in callback for Subscriber{typeof(T)}: {e.GetType()}\n{e}");
+			queue.Enqueue(t);
+		}
+		internal void Run() {
+			while (!queue.IsEmpty) {
+				T t;
+				if (queue.TryDequeue(out t)) {
+					try {
+						callback(t);
+					} catch (Exception e) {
+						Debug.LogError($"MessageBus<{typeof(T)}>.Run(): Error in callback with value {t}:\n{e}");
+						//MessageBus.RunOnMain(()=>{ 
+						//});
+					}
+				}
 			}
 		}
 		public void Unsubscribe() {

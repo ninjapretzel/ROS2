@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 
 public class DirectlyFollowPath : MonoBehaviour {
 
@@ -12,7 +13,7 @@ public class DirectlyFollowPath : MonoBehaviour {
 	public int i = 1;
 	public List<Vector3> targets;
 	ISub<Path> targetSub;
-	public float lastPath;
+	public DateTime lastPath;
 
 	CharacterController c;
 
@@ -27,7 +28,7 @@ public class DirectlyFollowPath : MonoBehaviour {
 
 		targets = path.points;
 		i = 1;
-		lastPath = Time.time;
+		lastPath = DateTime.UtcNow;
 
 	}
 
@@ -40,7 +41,8 @@ public class DirectlyFollowPath : MonoBehaviour {
 		if (c == null) { c = gameObject.AddComponent<CharacterController>(); }
 
 		// Do we need to unstuck?
-		if (Time.time - lastPath <= stuckTime) {
+		float timeSincePath = (float)(DateTime.UtcNow - lastPath).TotalSeconds;
+		if (timeSincePath <= stuckTime) {
 			// Nope, follow path
 			if (targets != null && targets.Count > 1 && i < targets.Count) {
 				Vector3 target = targets[i] + offset;
@@ -59,7 +61,7 @@ public class DirectlyFollowPath : MonoBehaviour {
 			}
 		} else {
 			// We need to unstick
-			float overTime = Time.time - lastPath - stuckTime;
+			float overTime = timeSincePath - stuckTime;
 			if (overTime <= 0) { overTime = Time.deltaTime; }
 			float turnRate = 1080 / overTime;
 			if (turnRate < 20) { turnRate = 20; }

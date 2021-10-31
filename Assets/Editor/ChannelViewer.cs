@@ -3,17 +3,26 @@ using UnityEditor;
 using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO;
 
 public class ChannelViewer : EditorWindow {
 	
 	[MenuItem("Window/ChannelViewer")]
 	public static void Init() {
 		ChannelViewer w = EditorWindow.GetWindow<ChannelViewer>();
+		
 		w.Show();
 	}
 
+	void Reload() {
+		if (alphas == null) { alphas = new Dictionary<string, float>(); }
+		
+	}
 
+	static Dictionary<string, float> alphas;
 	Vector2 scroll;
+	float defaultAlpha = .5f;
+
 	public ChannelViewer() {
 	}
 	public static readonly Color[] CS = new Color[] {
@@ -39,6 +48,8 @@ public class ChannelViewer : EditorWindow {
 			if (v != null) {
 				vbd2 = GUILayout.Toggle(v.visualizeByDefault, "Visualize by default?");
 				v.visualizeByDefault = vbd2;
+				GUILayout.Label("Alpha:");
+				defaultAlpha = GUILayout.HorizontalSlider(defaultAlpha, 0, 1);
 			}
 			bool vbdToggled = vbd != vbd2;	
 

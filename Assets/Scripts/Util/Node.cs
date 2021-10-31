@@ -8,6 +8,9 @@ public class Node : MonoBehaviour {
 
 	public static IDictionary<string, Node> nodes = new ConcurrentDictionary<string, Node>();
 	public string nodeName;
+	public Vector3 pos;
+	public Quaternion rot;
+	public Vector3 scale;
 
 	public static string Register(string name, Node node, bool anonymous = false) {
 		if (anonymous) {
@@ -28,6 +31,9 @@ public class Node : MonoBehaviour {
 	float timeout = 0;
 	void Update() {
 		timeout += Time.deltaTime * rate;
+		pos = transform.position;
+		rot = transform.rotation;
+		scale = transform.lossyScale;
 		while (timeout > 1) {
 			timeout -= 1;
 			Tick();

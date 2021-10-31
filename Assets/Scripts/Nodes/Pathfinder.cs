@@ -16,7 +16,7 @@ public class Path {
 		}
 	}
 }
-public class Pathfinder : MonoBehaviour {
+public class Pathfinder : Node {
 
 	public string gridChannel = "undefined";
 	public string targetChannel = "moveTargets";
@@ -54,7 +54,7 @@ public class Pathfinder : MonoBehaviour {
 	void UpdatePath() {
 		
 		if (target != null && grid != null) {
-			Vector2Int st = grid.WorldXZToGrid(transform.position);
+			Vector2Int st = grid.WorldXZToGrid(pos);
 			Vector2Int tg = grid.WorldXZToGrid(target.Value);
 
 			var result = AStar.Pathfind(st, tg, grid);
