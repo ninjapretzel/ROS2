@@ -17,6 +17,8 @@ public class WallFollowTrainer : MonoBehaviour {
 
 	public class QTData {
 		public float score;
+		public int generation;
+		public int trial;
 		public Dictionary<string, float[]> data;
 	}
 
@@ -26,6 +28,8 @@ public class WallFollowTrainer : MonoBehaviour {
 	public Vector3 initialPosition;
 	[Range(0, 360)] public float initialRotation = 0;
 	public string filename = "qt";
+	public int generation = 0;
+	public int trial = 0;
 	public float bestScore = 0;
 	public float currentScore;
 	public float mutateChance = .01f;
@@ -60,6 +64,9 @@ public class WallFollowTrainer : MonoBehaviour {
 				QTData qtdata = Json.GetValue<QTData>(result);
 				best = qtdata.data;
 				bestScore = qtdata.score;
+				generation = qtdata.generation;
+				trial = qtdata.trial;
+
 				Debug.Log($"Initialized best qt table from {filename}.json: {best.Count} states.");
 			}
 		}
@@ -75,15 +82,15 @@ public class WallFollowTrainer : MonoBehaviour {
 
 	void OnDisable() {
 		if (best != null) {
-			QTData qt = new QTData() { data = best, score = bestScore };
+			QTData qt = new QTData() { data = best, score = bestScore, trial = trial, generation = generation };
 			File.WriteAllText(filename + ".json", Json.Reflect(qt).ToString());
 			Debug.Log($"Saved best qt to {filename}.json");
 		}
 	}
 
 	void LateUpdate() {
-		if (!sim) { Debug.Log("Skipping, sim not running."); return; }
-		if (!wallFollow || !wallFollow.isActiveAndEnabled) { Debug.Log("Skipping, no attached wallFollow or it is inactive"); return; }
+		if (!sim) { return; }
+		if (!wallFollow || !wallFollow.isActiveAndEnabled) { return; }
 
 		// Objective function:
 		gain = 1;
@@ -128,12 +135,12 @@ public class WallFollowTrainer : MonoBehaviour {
 	void PrepareSim() {
 		wallFollow.transform.position = wallFollow.pos = initialPosition;
 		wallFollow.transform.rotation = wallFollow.rot = Quaternion.Euler(0, initialRotation, 0);
-		Debug.Log($"Teleported robot to {wallFollow.transform.position} / {wallFollow.transform.rotation}");
+		Debug.Log($"Teleported robot to {wallFollow.transform.position} / {wallFollow.transform.rotation}");// 
+		trial++;
 		wallFollow.qt = Mutate(best);
 		currentScore = 0;
 		noScore = 0;
 		gain = 0;
-
 		wallFollow.Reset();
 		
 		Invoke("StartSim", simDelay);
@@ -151,6 +158,7 @@ public class WallFollowTrainer : MonoBehaviour {
 			Debug.Log($"{currentScore} beat {bestScore} within one frame worth of score");
 			best = wallFollow.qt;
 			bestScore = currentScore;
+			generation++;
 		}
 		
 		PrepareSim();
