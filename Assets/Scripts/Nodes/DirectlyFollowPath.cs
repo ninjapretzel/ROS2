@@ -39,6 +39,7 @@ public class DirectlyFollowPath : MonoBehaviour {
 	void Update() {
 		if (c == null) { c = GetComponent<CharacterController>(); }
 		if (c == null) { c = gameObject.AddComponent<CharacterController>(); }
+		offset.y = c.height / 2f;
 
 		// Do we need to unstuck?
 		float timeSincePath = (float)(DateTime.UtcNow - lastPath).TotalSeconds;
@@ -57,7 +58,8 @@ public class DirectlyFollowPath : MonoBehaviour {
 				Quaternion oldRot = transform.rotation;
 				transform.LookAt(transform.position + (newPos - pos));
 				transform.rotation = Quaternion.Slerp(oldRot, transform.rotation, Time.deltaTime * 11);
-
+				// Force flat rotations only 
+				transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
 			}
 		} else {
 			// We need to unstick
