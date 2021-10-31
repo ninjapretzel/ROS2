@@ -7,10 +7,10 @@ using System;
 public class Node : MonoBehaviour {
 
 	public static IDictionary<string, Node> nodes = new ConcurrentDictionary<string, Node>();
-	public string nodeName;
-	public Vector3 pos;
-	public Quaternion rot;
-	public Vector3 scale;
+	[SerializeField] private string nodeName;
+	[NonSerialized] public Vector3 pos;
+	[NonSerialized] public Quaternion rot;
+	[NonSerialized] public Vector3 scale;
 
 	public static string Register(string name, Node node, bool anonymous = false) {
 		if (anonymous) {
