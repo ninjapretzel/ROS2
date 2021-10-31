@@ -28,7 +28,6 @@ public class LaserScan2Grid : Node {
 	void Awake() {
 		InitNode("LaserScanner", true);
 		
-		pub = MessageBus<OccupancyGrid>.PublishTo(gridPath);
 		
 		Vector3 origin = center - new Vector3(width, 0, height) * resolution  / 2f;
 		info = new OccupancyGrid.Info(width, height, resolution, origin);
@@ -42,6 +41,7 @@ public class LaserScan2Grid : Node {
 
 	void OnEnable() {
 		sub = MessageBus<LaserScanData>.SubscribeTo(scanPath, Convert);
+		pub = MessageBus<OccupancyGrid>.PublishTo(gridPath);
 	}
 	void OnDisable() {
 		sub.Unsubscribe();

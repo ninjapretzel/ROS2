@@ -29,7 +29,7 @@ public class Node : MonoBehaviour {
 	public float rate = 1;
 	public float delay { get { return 1f/rate; } }
 	float timeout = 0;
-	void Update() {
+	public void Update() {
 		timeout += Time.deltaTime * rate;
 		pos = transform.position;
 		rot = transform.rotation;

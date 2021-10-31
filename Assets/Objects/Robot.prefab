@@ -69,7 +69,7 @@ MonoBehaviour:
   channel: undefined
   maxDist: 66
   sweep: 360
-  numLasers: 300
+  numLasers: 360
   offset: 0.1
   laserWobble: 0.195
 --- !u!114 &1065354888317541200

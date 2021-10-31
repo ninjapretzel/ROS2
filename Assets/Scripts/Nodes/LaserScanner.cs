@@ -16,16 +16,19 @@ public struct LaserLine {
 }
 [System.Serializable]
 public class LaserScanData {
-	public List<LaserLine> lines;
+	public readonly List<LaserLine> lines;
 	public LaserScanData() {
 		lines = new List<LaserLine>();
 	}
 	public void Visualize(float alpha) {
+
 		Color c = Color.green;
 		c.a = alpha;
 		Gizmos.color = c;
 
+		int i = 0;
 		foreach (var line in lines) {
+			i++;
 			Gizmos.DrawLine(line.ray.origin, line.ray.origin + line.ray.direction * line.distance);
 		}
 	}
@@ -34,7 +37,6 @@ public class LaserScanData {
 public class LaserScanner : Node {
 	
 	public string channel = "undefined";
-	const float TAU = Mathf.PI * 2;
 	public float maxDist = 50f;
 	[Range(0, 360)] public float sweep = 360;
 	[Range(20,720)] public int numLasers = 100;
@@ -46,11 +48,14 @@ public class LaserScanner : Node {
 
 	void Awake() {
 		InitNode("LaserScanner", true);
-		pub = MessageBus<LaserScanData>.PublishTo(channel);
 	}
 
-	void OnDestroy() {
+	void OnEnable() {
+		pub = MessageBus<LaserScanData>.PublishTo(channel);
 		
+	}
+	void OnDisable() {
+
 	}
 
 	public override void Tick() {
@@ -62,7 +67,8 @@ public class LaserScanner : Node {
 		float deltaAngle = sweep / numLasers;
 		
 		for (int i = 0; i < numLasers; i++) {
-			float angle = -sweep/2 + deltaAngle * i;
+			float angle = -sweep/2f + deltaAngle * i;
+
 			Vector3 dir = Quaternion.AngleAxis(angle, axis) * direction;
 			dir += Random.insideUnitSphere * uncertainty;
 		

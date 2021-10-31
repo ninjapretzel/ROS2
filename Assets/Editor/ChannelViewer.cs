@@ -4,6 +4,7 @@ using System.Collections;
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using System;
 
 public class ChannelViewer : EditorWindow {
 	
@@ -33,6 +34,15 @@ public class ChannelViewer : EditorWindow {
 		new Color(1f, .8f, 1f),
 		new Color(1f, 1f, .8f),
 	};
+
+	private static readonly Dictionary<Type, float> defaultAlphas = new Dictionary<Type, float>() {
+		{ typeof(OccupancyGrid), .25f },
+		{ typeof(LaserScanData), .10f },
+	};
+	private float DefaultAlpha(Type t) {
+		return defaultAlphas.ContainsKey(t) ? defaultAlphas[t] : defaultAlpha;
+	}
+
 	void OnGUI() {
 		int k = 0;
 
@@ -77,12 +87,12 @@ public class ChannelViewer : EditorWindow {
 								bool vis = v.visualizeByDefault ? true : alpha > 0;
 
 								vis = GUILayout.Toggle(vis, "Visualize?");
-								if (alpha <= 0) { alpha = .5f; }
+								if (alpha <= 0) { alpha = DefaultAlpha(type); }
 
 								if (!vis) { alpha = 0; }
 								else { alpha = GUILayout.HorizontalSlider(alpha, 0, 1); }
 								if (vbdToggled) {
-									alpha = vbd2 ? .5f : 0f;
+									alpha = vbd2 ? DefaultAlpha(type) : 0f;
 								}
 
 								v[(object)pub] = alpha;
