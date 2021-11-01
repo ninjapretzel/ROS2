@@ -945,10 +945,17 @@ MonoBehaviour:
   wallFollow: {fileID: 1823166395}
   sim: 0
   resimulate: 1
+  generateRegions: 1
+  numRegions: 36
+  targetDistance: 4
+  targetFalloff: 5
+  distanceStep: 4
+  maxDistance: 15
   simDelay: 0.1
   initialPosition: {x: -42.74622, y: 0, z: 23.747171}
   initialRotation: 180
-  filename: qt4
+  configFile: setup-generator
+  qtFile: qt
   generation: 0
   species: 0
   trial: 0

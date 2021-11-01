@@ -28,12 +28,53 @@ public class WallFollowTrainer : MonoBehaviour {
 	public Dictionary<string, float[]> best;
 	public bool sim = false;
 	public bool resimulate = false;
+	public bool generateRegions = true;
+	public int numRegions = 36;
+	public float targetDistance = 4f;
+	public float targetFalloff = 5f;
+	public float distanceStep = 2f;
+	public float maxDistance = 20f;
+	
+	public FeelerRegion[] GenerateRegions() {
+		float angleDiff = 360f / numRegions;
+
+		FeelerRegion[] regions = new FeelerRegion[numRegions];
+		int nD = (int)(maxDistance/distanceStep);
+		float[] distances = new float[nD];
+		for (int i = 0; i < nD; i++) { distances[i] = (i+1) * distanceStep; }
+
+		rightDistanceMults = new float[nD + 1];
+		for (int i = 0; i < nD + 1; i++) {
+			float dist = Mathf.Abs(targetDistance - (i * distanceStep));
+			float f = dist / targetFalloff;
+			float score = Mathf.Clamp01(Mathf.Lerp(1, 0, f));
+			rightDistanceMults[i] = score;
+		}
+		Debug.Log($"Generated mults: {Json.Reflect(rightDistanceMults)}");
+
+		float startAngle = -90 - angleDiff / 2f;
+		for (int i = 0 ; i < numRegions; i++) {
+			FeelerRegion region = new FeelerRegion();
+			float start = startAngle + angleDiff * i;
+			float end = startAngle + angleDiff * (i+1);
+			region.name = $"{start:f2}-{end:f2}";
+			region.start = start; 
+			region.end = end;
+			region.distances = distances;
+			regions[i] = region;
+		}
+		regions[0].name = "right";
+
+		return regions;
+	}
+
 	public float simDelay = .1f;
 	public Vector3 initialPosition;
 	[Range(0, 360)] public float initialRotation = 0;
 
 	[Header("Save/Load/Tracking")]
-	public string filename = "qt";
+	public string configFile = "setup1";
+	public string qtFile = "qt";
 	public int generation = 0;
 	public int species = 0;
 	public int trial = 0;
@@ -79,8 +120,23 @@ public class WallFollowTrainer : MonoBehaviour {
 	}
 
 	void Awake() {
-		if (File.Exists(filename+".json")) {
-			JsonObject result = Json.Parse<JsonObject>(File.ReadAllText(filename + ".json"));
+		if (File.Exists(configFile+".json")) {
+			JsonObject result = Json.Parse<JsonObject>(File.ReadAllText(configFile + ".json"));
+			if (result != null) {
+				Json.ReflectInto(result, this);
+				Debug.Log($"Loaded config from {configFile}.json");
+
+				if (result.Has("regions")) {
+					if (result["regions"].isArray) {
+						wallFollow.regions = Json.GetValue<FeelerRegion[]>(result["regions"]);
+					}
+				}
+			}
+		}
+
+
+		if (File.Exists(qtFile+".json")) {
+			JsonObject result = Json.Parse<JsonObject>(File.ReadAllText(qtFile + ".json"));
 			if (result != null) {
 				QTData qtdata = Json.GetValue<QTData>(result);
 				best = qtdata.data;
@@ -89,12 +145,27 @@ public class WallFollowTrainer : MonoBehaviour {
 				species = qtdata.species;
 				trial = qtdata.trial;
 
-				Debug.Log($"Initialized best qt table from {filename}.json: {best.Count} states.");
+				Debug.Log($"Initialized best qt table from {qtFile}.json: {best.Count} states.");
 			}
 		}
+
+		if (generateRegions) {
+			Debug.Log($"Generating feeler region table of {numRegions} cnt");
+			wallFollow.regions = GenerateRegions();
+		}
+			
+
 		if (best == null) {
-			Debug.Log($"Using new qt for {filename}.json");
-			best = wallFollow.InitializeTable();
+			try {
+
+				best = wallFollow.InitializeTable();
+			
+				Debug.Log($"Using new qt of size {best.Count} for {qtFile}.json");
+			}catch(System.Exception e) {
+				gameObject.SetActive(false);
+				wallFollow.gameObject.SetActive(false);
+				Debug.LogError("Not initializing due to error " + e);
+			}
 		}
 	}
 	
@@ -110,10 +181,22 @@ public class WallFollowTrainer : MonoBehaviour {
 
 	private void SaveBest() {
 		QTData qt = new QTData() { data = best, score = bestScore, generation = generation, species = species, trial = trial, };
-		File.WriteAllText(filename + ".json", Json.Reflect(qt).ToString());
-		Debug.Log($"Saved best qt to {filename}.json");
+		File.WriteAllText(qtFile + ".json", Json.Reflect(qt).ToString());
+		Debug.Log($"Saved best qt to {qtFile}.json");
 	}
 
+	public static int IndexOf<T>(T[] ts, T t) {
+		for (int i = 0; i < ts.Length; i++) {
+			if (ts[i].Equals(t)) { return i; }
+		}
+		return -1;
+	}
+	public static int IndexOf<T>(T[] ts, System.Func<T, bool> selector) {
+		for (int i = 0; i < ts.Length; i++) {
+			if (selector(ts[i])) { return i; }
+		}
+		return -1;
+	}
 	void LateUpdate() {
 		if (!sim) { return; }
 		if (!wallFollow || !wallFollow.isActiveAndEnabled) { return; }
@@ -121,7 +204,15 @@ public class WallFollowTrainer : MonoBehaviour {
 		// Objective function:
 		gain = 1;
 		simTime += Time.deltaTime;
-		int rightState = wallFollow.currentState[3];
+
+		int rightIndex = IndexOf(wallFollow.regions, (it)=>{ return it.name=="right"; });
+		if (rightIndex == -1) {
+			Debug.LogWarning("WallFollowTrainer: To train, at least one region must have the name \"right\"!");
+			gameObject.SetActive(false);
+			wallFollow.gameObject.SetActive(false);
+			return;
+		}
+		int rightState = wallFollow.currentState[rightIndex];
 		float forwardSpeed = wallFollow.lastActions[0] - wallFollow.lastActions[1];
 
 		// Score based on wall dist to right,
@@ -200,11 +291,11 @@ public class WallFollowTrainer : MonoBehaviour {
 				best = wallFollow.qt;
 				generation++;
 				species = 0;
+				SaveBest();
 			} else {
 				bestScore = currentScore;
 				Debug.Log($"Rescored best to {bestScore}");
 			}
-			SaveBest();
 		}
 		
 		PrepareSim();

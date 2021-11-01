@@ -1,0 +1,21 @@
+{
+	regions: [
+		{ name: "left", start:75, end: 105, distances: [3,4,7,10,], },
+		{ name: "forward", start:-20, end: 20, distances: [4, 8, 12, 16, 20,], },
+		{ name: "forward-right", start:-50, end: -10, distances: [4, 7, 10, 13, 16,], },
+		{ name: "right", start:-100, end: -80, distances: [4, 8, 12, 16, 20,], },
+	],
+	rightDistanceMults: [ .2, 1, .7, .2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
+	qtFile:"qt4",
+	resimulate:true,
+	generateRegions:false,
+	forwardScoreMult: 2,
+	maxForwardScore: 2,
+	mutateChance: .03,
+	drift: .1,
+	driftChance: .9,
+	maxHealth: 30,
+	heal: 1, healShrink: 150,
+	damage: 1, damageGrow: 12,
+	
+}

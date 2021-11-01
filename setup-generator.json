@@ -1,0 +1,23 @@
+{
+	qtFile:"generated8regions",
+	resimulate:true,
+	generateRegions:true,
+	
+	numRegions:8,
+	targetDistance:3,
+	targetFalloff:6,
+	distanceStep:3,
+	maxDistance:10,
+	
+	forwardScoreMult:2,
+	maxForwardScore:2,
+	
+	mutateChance: .03,
+	drift: .1,
+	driftChance: .9,
+	
+	maxHealth: 30,
+	heal: 1, healShrink: 150,
+	damage: 1, damageGrow: 12,
+	
+}

@@ -21,6 +21,7 @@ public class WallFollow : Node {
 	public int[] currentState = new int[] { 0,0,0,0 };
 	public string currentStateCode = "0000";
 
+	
 	CharacterController c;
 	ISub<LaserScanData> scanSub;
 	IPub<Feeler> feelPub;
@@ -62,7 +63,14 @@ public class WallFollow : Node {
 	}
 	public Dictionary<string, float[]> InitializeTable() {
 		int nStates = 1;
-		foreach (var region in regions) { nStates *= region.nStates; }
+		int rep = 0;
+		foreach (var region in regions) { 
+			var last = nStates;
+			nStates *= region.nStates; 
+			if (nStates < last) { throw new Exception($"Too many states {last} -> {nStates} @ {rep}!"); }
+			rep++;
+		}
+		Debug.Log($"Initializing qt of {nStates} states");
 
 		var table = new Dictionary<string, float[]>();
 		char[] code = new char[regions.Length];
@@ -111,15 +119,6 @@ public class WallFollow : Node {
 		
 		lastActions = actions;
 	}
-	
-	static bool Within(float angle, float start, float end) {
-		if (angle >= start && angle <= end) { return true; }
-		angle += 360;
-		if (angle >= start && angle <= end) { return true; }
-		angle -= 720;
-		if (angle >= start && angle <= end) { return true; }
-		return false;
-	}
 	void OnScan(LaserScanData scan) {
 		// File.WriteAllText("scan.json", Json.Reflect(scan).PrettyPrint());
 		int[] state = new int[regions.Length];
@@ -153,38 +152,53 @@ public class WallFollow : Node {
 	}
 
 	public const string CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	[System.Serializable]
-	public class FeelerRegion {
-		public string name;
-		public float start; 
-		public float end;
-		public float[] distances;
-		public float maxDistance { get { return distances[max-1]; } }
-		public int max { get { return distances.Length; } }
-		public int nStates { get { return max+1; } }
 
+
+	public static bool Within(float angle, float start, float end) {
+		if (angle >= start && angle <= end) { return true; }
+		angle += 360;
+		if (angle >= start && angle <= end) { return true; }
+		angle -= 720;
+		if (angle >= start && angle <= end) { return true; }
+		return false;
 	}
 
-	[System.Serializable]
-	public class Feeler {
-		public FeelerRegion[] regions;
-		public LaserScanData scan;
-		public int[] state;
-		public string code;
-		public Node node;
-		public Feeler(FeelerRegion[] regions, LaserScanData scan, int[] state, Node node) {
-			this.regions = regions;
-			this.scan = scan;
-			this.state = state;
-			this.node = node;
-			code = "";
-			for (int i = 0; i < state.Length; i++) {
-				code += CHARS[i];
-			}
+
+}
+
+
+[System.Serializable]
+public class FeelerRegion {
+	public string name;
+	public float start;
+	public float end;
+	public float[] distances;
+	public float maxDistance { get { return distances[max - 1]; } }
+	public int max { get { return distances.Length; } }
+	public int nStates { get { return max + 1; } }
+
+}
+
+[System.Serializable]
+public class Feeler {
+	public FeelerRegion[] regions;
+	public LaserScanData scan;
+	public int[] state;
+	public string code;
+	public Node node;
+	public Feeler(FeelerRegion[] regions, LaserScanData scan, int[] state, Node node) {
+		this.regions = regions;
+		this.scan = scan;
+		this.state = state;
+		this.node = node;
+		code = "";
+		for (int i = 0; i < state.Length; i++) {
+			code += WallFollow.CHARS[i];
 		}
-		const float H = 1f;
-		const float L = .4f;
-		public static readonly Color[] CS = new Color[] {
+	}
+	const float H = 1f;
+	const float L = .4f;
+	public static readonly Color[] CS = new Color[] {
 			new Color(H, L, L),
 			new Color(L, H, L),
 			new Color(L, L, H),
@@ -192,47 +206,44 @@ public class WallFollow : Node {
 			new Color(H, L, H),
 			new Color(H, H, L),
 		};
-		public void Visualize(float alpha) {
-			if (!node) { return; }
-			Vector3 forward = node.transform.forward;
-			void setColor(int i, float scale = 1.0f) {
-				Color col = CS[i % CS.Length];
-				col.a = alpha * scale;
-				Gizmos.color = col;
-			}
-			
-			for (int i = 0; i < regions.Length; i++) {
-				var region = regions[i];
-
-				for (int j = 0; j < region.max; j++) {
-					float dist = region.distances[j];
-					
-					setColor(i, state[i] <= j ? .44f : 1f);
-					Vector3 last = node.pos;
-					float segments = 8;
-					for (int k = 0; k < segments; k++) {
-						Quaternion r = Quaternion.Euler(0, -Mathf.Lerp(region.start, region.end, k/(segments-1)), 0);
-						Vector3 next = node.pos + r * forward * dist;
-						Gizmos.DrawLine(last, next);
-						last = next;
-					}
-
-					Gizmos.DrawLine(last, node.pos);
-				}
-
-				for (var k = 0; k < scan.lines.Count; k++) {
-					var line = scan.lines[k];
-					if (Within(-line.angle, region.start, region.end)) {
-						setColor(i, .4f);
-						Gizmos.DrawLine(line.ray.origin, line.ray.origin + line.ray.direction * line.distance);
-
-					}
-				}
-						
-			}
+	public void Visualize(float alpha) {
+		if (!node) { return; }
+		Vector3 forward = node.transform.forward;
+		void setColor(int i, float scale = 1.0f) {
+			Color col = CS[i % CS.Length];
+			col.a = alpha * scale;
+			Gizmos.color = col;
 		}
 
+		for (int i = 0; i < regions.Length; i++) {
+			var region = regions[i];
+
+			for (int j = 0; j < region.max; j++) {
+				float dist = region.distances[j];
+
+				setColor(i, state[i] <= j ? .44f : 1f);
+				Vector3 last = node.pos;
+				float segments = 8;
+				for (int k = 0; k < segments; k++) {
+					Quaternion r = Quaternion.Euler(0, -Mathf.Lerp(region.start, region.end, k / (segments - 1)), 0);
+					Vector3 next = node.pos + r * forward * dist;
+					Gizmos.DrawLine(last, next);
+					last = next;
+				}
+
+				Gizmos.DrawLine(last, node.pos);
+			}
+
+			for (var k = 0; k < scan.lines.Count; k++) {
+				var line = scan.lines[k];
+				if (WallFollow.Within(-line.angle, region.start, region.end)) {
+					setColor(i, .4f);
+					Gizmos.DrawLine(line.ray.origin, line.ray.origin + line.ray.direction * line.distance);
+
+				}
+			}
+
+		}
 	}
+
 }
-
-
