@@ -944,7 +944,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wallFollow: {fileID: 1823166395}
   sim: 0
-  resimulate: 0
+  resimulate: 1
   simDelay: 0.1
   initialPosition: {x: -42.74622, y: 0, z: 23.747171}
   initialRotation: 180
