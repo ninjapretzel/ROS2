@@ -194,11 +194,16 @@ public class WallFollowTrainer : MonoBehaviour {
 		wallFollow.gameObject.SetActive(false);
 
 		if (currentScore  >= bestScore - Time.deltaTime * gain) {
-			Debug.Log($"{currentScore} beat {bestScore} within one frame worth of score");
-			best = wallFollow.qt;
-			bestScore = currentScore;
-			generation++;
-			species = 0;
+			if (wallFollow.qt != best) {
+				Debug.Log($"{currentScore} beat {bestScore} within one frame worth of score");
+				bestScore = currentScore;
+				best = wallFollow.qt;
+				generation++;
+				species = 0;
+			} else {
+				bestScore = currentScore;
+				Debug.Log($"Rescored best to {bestScore}");
+			}
 			SaveBest();
 		}
 		
