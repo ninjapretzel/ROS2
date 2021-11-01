@@ -43,7 +43,6 @@ public static class MessageBus {
 					}
 				}
 
-
 			}
 			catch (ThreadAbortException) { }
 			catch (Exception e) {
@@ -51,6 +50,7 @@ public static class MessageBus {
 				//RunOnMain(() => {
 				//});
 			}
+			Thread.Sleep(1);
 		}
 	}
 
