@@ -971,9 +971,9 @@ MonoBehaviour:
   maxHealth: 30
   curHealth: 0
   heal: 1
-  healShrink: 1000
+  healShrink: 150
   damage: 1
-  damageGrow: 180
+  damageGrow: 12
   damageRate: 1
   healRate: 1
 --- !u!4 &853539363
@@ -1476,7 +1476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 484a3fd397b5ca3459f7600b8dafd36f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nodeName: LaserScanFeeler-1c39e480-d4f6-4459-9c99-807e1c4c20b1
+  nodeName: LaserScanFeeler-98983ce4-c203-404a-92d4-496a715d0873
   rate: 10
   scanPath: undefined
   feelPath: undefined
@@ -1489,15 +1489,15 @@ MonoBehaviour:
   turnSpeed: 150
   regions:
   - name: left
-    start: 60
-    end: 120
+    start: 75
+    end: 105
     distances:
     - 4
     - 7
     - 10
   - name: forward
-    start: -30
-    end: 30
+    start: -20
+    end: 20
     distances:
     - 4
     - 8
@@ -1505,8 +1505,8 @@ MonoBehaviour:
     - 16
     - 20
   - name: forward-right
-    start: -70
-    end: -20
+    start: -50
+    end: -10
     distances:
     - 4
     - 7
@@ -1514,8 +1514,8 @@ MonoBehaviour:
     - 13
     - 16
   - name: right
-    start: -120
-    end: -60
+    start: -100
+    end: -80
     distances:
     - 4
     - 8
@@ -1525,11 +1525,11 @@ MonoBehaviour:
   lastFlags: 0
   lastActions:
   - 1
-  - 0
-  - 0
-  - 0
-  currentState: 03000000040000000300000004000000
-  currentStateCode: 3434
+  - 0.2
+  - 0.6
+  - 0.4
+  currentState: 03000000040000000400000001000000
+  currentStateCode: 3441
 --- !u!1 &2093958780
 GameObject:
   m_ObjectHideFlags: 0
