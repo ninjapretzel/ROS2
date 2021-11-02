@@ -53,7 +53,7 @@ public class WallFollow : Node {
 			currentStateCode += CHARS[currentState[i]];
 		}
 
-		lastActions = null;
+		lastActions = defaultActions;
 		lastFlags = CollisionFlags.None;
 	}
 
@@ -99,13 +99,13 @@ public class WallFollow : Node {
 		string s = "[ ";
 		for (int i = 0; i < actions.Length; i++) { s += $"{actions[i]:f000}, "; }
 		s += "]";
-		if (lastActions != actions) {
-			if (qt.ContainsKey(currentStateCode)) {
-				Debug.Log($"Withdrew actions {s} from code = [{currentStateCode}]");
-			} else {
-				Debug.Log($"code {currentStateCode} not found, using defaultActions = {s}");
-			}
-		}
+		//if (lastActions != actions) {
+		//	if (qt.ContainsKey(currentStateCode)) {
+		//		Debug.Log($"Withdrew actions {s} from code = [{currentStateCode}]");
+		//	} else {
+		//		Debug.Log($"code {currentStateCode} not found, using defaultActions = {s}");
+		//	}
+		//}
 
 
 		if (c == null) { c = GetComponent<CharacterController>(); }
