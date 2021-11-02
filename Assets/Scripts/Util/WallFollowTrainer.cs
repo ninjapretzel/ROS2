@@ -154,6 +154,7 @@ public class WallFollowTrainer : MonoBehaviour {
 			wallFollow.regions = GenerateRegions();
 		}
 			
+		var test = wallFollow.InitializeTable();
 
 		if (best == null) {
 			try {
@@ -166,6 +167,11 @@ public class WallFollowTrainer : MonoBehaviour {
 				wallFollow.gameObject.SetActive(false);
 				Debug.LogError("Not initializing due to error " + e);
 			}
+		}
+		if (best.Count != test.Count) {
+			Debug.LogError($"qt size mismatch. not testing. Regions indiciate {test.Count} states, but qt has {best.Count}.");
+			gameObject.SetActive(false);
+			wallFollow.gameObject.SetActive(false);
 		}
 	}
 	

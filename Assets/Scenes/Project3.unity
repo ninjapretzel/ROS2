@@ -945,7 +945,7 @@ MonoBehaviour:
   wallFollow: {fileID: 1823166395}
   sim: 0
   resimulate: 1
-  generateRegions: 1
+  generateRegions: 0
   numRegions: 36
   targetDistance: 4
   targetFalloff: 5
@@ -1509,7 +1509,6 @@ MonoBehaviour:
     - 4
     - 8
     - 12
-    - 16
     - 20
   - name: forward-right
     start: -50
@@ -1518,8 +1517,6 @@ MonoBehaviour:
     - 4
     - 7
     - 10
-    - 13
-    - 16
   - name: right
     start: -100
     end: -80
@@ -1527,7 +1524,6 @@ MonoBehaviour:
     - 4
     - 8
     - 12
-    - 16
     - 20
   lastFlags: 0
   lastActions:
