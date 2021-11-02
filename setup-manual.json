@@ -1,12 +1,12 @@
 {
 	regions: [
-		{ name: "left", start:75, end: 105, distances: [3,4,7,10,], },
+		{ name: "left", start:75, end: 105, distances: [4,7,10,], },
 		{ name: "forward", start:-20, end: 20, distances: [4, 8, 12, 16, 20,], },
-		{ name: "forward-right", start:-50, end: -10, distances: [4, 7, 10, 13, 16,], },
+		{ name: "forward-right", start:-50, end: -10, distances: [4, 7, 10, 16,], },
 		{ name: "right", start:-100, end: -80, distances: [4, 8, 12, 16, 20,], },
 	],
 	rightDistanceMults: [ .2, 1, .7, .2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ],
-	qtFile:"qt4",
+	qtFile:"qt2",
 	resimulate:true,
 	generateRegions:false,
 	forwardScoreMult: 2,

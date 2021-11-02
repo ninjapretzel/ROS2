@@ -954,7 +954,7 @@ MonoBehaviour:
   simDelay: 0.1
   initialPosition: {x: -42.74622, y: 0, z: 23.747171}
   initialRotation: 180
-  configFile: setup-generator
+  configFile: setup-manual
   qtFile: qt
   generation: 0
   species: 0

@@ -16,7 +16,7 @@ public class WallFollow : Node {
 	public Dictionary<string, float[]> qt;
 
 	public CollisionFlags lastFlags = CollisionFlags.None;
-	public float[] lastActions = new float[] { 0,0,0,0 };
+	public float[] lastActions = null;
 
 	public int[] currentState = new int[] { 0,0,0,0 };
 	public string currentStateCode = "0000";
@@ -52,7 +52,8 @@ public class WallFollow : Node {
 			currentState[i] = regions[i].max;
 			currentStateCode += CHARS[currentState[i]];
 		}
-		lastActions = defaultActions;
+
+		lastActions = null;
 		lastFlags = CollisionFlags.None;
 	}
 
@@ -98,13 +99,13 @@ public class WallFollow : Node {
 		string s = "[ ";
 		for (int i = 0; i < actions.Length; i++) { s += $"{actions[i]:f000}, "; }
 		s += "]";
-		//if (lastActions != actions) {
-		//	if (qt.ContainsKey(currentStateCode)) {
-		//		Debug.Log($"Withdrew actions {s} from code = [{currentStateCode}]");
-		//	} else {
-		//		Debug.Log($"code {currentStateCode} not found, using defaultActions = {s}");
-		//	}
-		//}
+		if (lastActions != actions) {
+			if (qt.ContainsKey(currentStateCode)) {
+				Debug.Log($"Withdrew actions {s} from code = [{currentStateCode}]");
+			} else {
+				Debug.Log($"code {currentStateCode} not found, using defaultActions = {s}");
+			}
+		}
 
 
 		if (c == null) { c = GetComponent<CharacterController>(); }
