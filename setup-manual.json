@@ -14,7 +14,7 @@
 	mutateChance: .03,
 	drift: .1,
 	driftChance: .9,
-	maxHealth: 30,
+	maxHealth: 180,
 	heal: 1, healShrink: 150,
 	damage: 1, damageGrow: 12,
 	
